@@ -1,0 +1,23 @@
+{
+  "name": "signalk-data-dejitter",
+  "version": "1.0.0",
+  "description": "SignalK plugin that provides de-jitter to values by averaging data frames",
+  "main": "index.js",
+  "homepage": "https://github.com/boatly/signalk-data-averaging",
+  "bugs": "https://github.com/boatly/signalk-data-averaging/issues",
+  "author": "Amir Lanesman <lanesman@gmail.com>",
+  "license": "ISC",
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk-category-utility",
+    "signal k",
+    "signalk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amirlanesman/signalk-data-dejitter"
+  },
+  "dependencies": {
+    "baconjs": "^0.7.88"
+  }
+}
