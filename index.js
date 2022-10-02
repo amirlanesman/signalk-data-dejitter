@@ -26,19 +26,15 @@ module.exports = function (app) {
     plugin.properties.values.forEach(valueConfig => {
 
       let stream = app.streambundle.getSelfStream(valueConfig.inputPath)
-      let count = 0
-      let cache = 0;
+      let cache = [];
       unsubscribes.push(
         Bacon.combineWith(val => {
-          count++
           // cache = cache + (val - cache) / count
-          cache = calc(valueConfig.calc, val, cache, count)
-          if (count === valueConfig.period) {
-            const res = cache
-            cache = 0
-            count = 0
-            return res
+          if (cache.length === valueConfig.period) {
+            cache.shift()
           }
+          cache.push(val)
+          return calc(valueConfig.calc, cache)
         }, stream)
           // .changes()
           // .debounceImmediate(calculation.debounceDelay || 20)
@@ -115,25 +111,22 @@ module.exports = function (app) {
   return plugin
 }
 
-function calc(type, val, cache, count) {
+function calc(type, cache) {
   switch (type) {
     case 'average':
-      return cache + (val - cache) / count
+      return _.mean(cache)
     case 'radialAverage':
-      const sincache = Math.sin(toRad(cache))
-      const coscache = Math.cos(toRad(cache))
-      const y = sincache + (Math.sin(toRad(val)) - sincache) / count
-      const x = coscache + (Math.cos(toRad(val)) - coscache) / count
+      const y = _.meanBy(cache, val => Math.sin(toRad(val)))
+      const x = _.meanBy(cache, val => Math.cos(toRad(val)))
       return toDeg(Math.atan2(y,x))
     case 'max':
-      return _.max([val, cache])
+      return _.max(cache)
     case 'min':
-      return _.min([val, cache])
+      return _.min(cache)
   }
 }
 
 toDeg = (angle) => (angle * (180 / Math.PI))
 toRad = (angle) => (angle * (Math.PI / 180))
-
 
 
