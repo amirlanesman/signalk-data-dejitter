@@ -25,10 +25,16 @@ module.exports = function (app) {
 
     plugin.properties.values.forEach(valueConfig => {
 
-      let stream = app.streambundle.getSelfStream(valueConfig.inputPath)
+      let stream = app.streambundle.getSelfBus(valueConfig.inputPath)
       let cache = [];
       unsubscribes.push(
-        Bacon.combineWith(val => {
+        Bacon.combineWith(inDelta => {
+          app.debug("got inDelta: ", inDelta)
+          if (valueConfig.source && inDelta.$source !== valueConfig.source) {
+            app.debug("skipping delta because source is wrong")
+            return
+          }
+          val = inDelta.value
           // cache = cache + (val - cache) / count
           if (cache.length === valueConfig.period) {
             cache.shift()
@@ -41,7 +47,7 @@ module.exports = function (app) {
           // .skipDuplicates(skip_function)
           .onValue(value => {
             if (value) {
-              let delta = {
+              let outDelta = {
                 // context: 'vessels.' + app.selfId,
                 context: 'vessels.' + app.selfId,
                 updates: [
@@ -50,8 +56,8 @@ module.exports = function (app) {
                   }
                 ]
               }
-              // app.debug("got delta: " + JSON.stringify(delta))
-              app.handleMessage(plugin.id, delta)
+              app.debug("generated outDelta: ",outDelta)
+              app.handleMessage(plugin.id, outDelta)
             }
           })
       )
@@ -99,6 +105,11 @@ module.exports = function (app) {
               title: 'Calculation to apply',
               default: 'average',
               enum: ['average', 'min', 'max', 'radialAverage']
+            },
+            source: {
+              type: 'string',
+              title: 'Filter value for specific SignalK source',
+              description: "(Optional - only if you have multiple sources and you want to use an explicit source)",
             }
           }
         }
